@@ -1,0 +1,10 @@
+# Python
+__pycache__
+.env/
+
+# Django
+migrations/
+db.sqlite3
+
+# :)
+roadmap.md
