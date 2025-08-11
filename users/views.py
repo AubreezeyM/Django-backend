@@ -8,7 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 
 from django.shortcuts import get_object_or_404
 
-from .serializers import UserSerializer
+from .serializers import UserSerializer, ProfileSerializer
 from .models import CustomUser
 
 @api_view(['POST'])
@@ -56,4 +56,16 @@ def validate_token(request):
 def get_all_users(request):
     return Response({'message': 'get_all_users() reached!'})
 
-
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def profile_detail(request):
+    profile = request.user.profile
+    if request.method == 'GET':
+        serializer = ProfileSerializer(profile)
+        return Response(serializer.data)
+    elif request.method == 'PUT':
+        serializer = ProfileSerializer(profile, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=400)
