@@ -56,7 +56,7 @@ def validate_token(request):
 def get_all_users(request):
     return Response({'message': 'get_all_users() reached!'})
 
-@api_view(['GET'])
+@api_view(['GET', 'PUT'])
 @permission_classes([IsAuthenticated])
 def profile_detail(request):
     profile = request.user.profile
