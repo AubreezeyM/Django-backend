@@ -17,8 +17,8 @@ def login(request):
 
     if not user.check_password(request.data['password']):
         return Response(
-            {'detail': 'User not found.'},
-            status=status.HTTP_404_NOT_FOUND
+            {'detail': 'Unauthorized.'},
+            status=status.HTTP_401_UNAUTHORIZED
         )
     serializer = UserSerializer(instance=user)
     token, created = Token.objects.get_or_create(user=user)
@@ -51,10 +51,6 @@ def validate_token(request):
         {'message': f'Test for {request.user.username} passed!'},
         status=status.HTTP_200_OK
     )
-
-@api_view(['GET'])
-def get_all_users(request):
-    return Response({'message': 'get_all_users() reached!'})
 
 @api_view(['GET', 'PUT'])
 @permission_classes([IsAuthenticated])
