@@ -1,9 +1,9 @@
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.authtoken.models import Token
 from rest_framework.authentication import SessionAuthentication, TokenAuthentication
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework_simplejwt.tokens import RefreshToken
 from django.shortcuts import get_object_or_404
 
 from .serializers import UserSerializer, ProfileSerializer
@@ -20,13 +20,27 @@ class LoginView(APIView):
                 {'detail': 'Unauthorized.'},
                 status=status.HTTP_401_UNAUTHORIZED
             )
-            
+
+        refresh = RefreshToken.for_user(user)
         serializer = UserSerializer(instance=user)
-        token, created = Token.objects.get_or_create(user=user)
+
         return Response({
-            'token': token.key,
+            'refresh': str(refresh),
+            'access':str(refresh.access_token),
             'user': serializer.data
         })
+
+class RefreshTokenView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        refresh_token = request.data.get('refresh')
+        try:
+            refresh = RefreshToken(refresh_token)
+            access_token = str(refresh.access_token)
+            return Response({'access': access_token})
+        except Exception as e:
+            return Response({'error': 'invalud refresh token'}, status=status.HTTP_401_UNAUTHORIZED)
 
 class CreateUserView(APIView):
     permission_classes = [AllowAny]
@@ -43,16 +57,6 @@ class CreateUserView(APIView):
                 'user': serializer.data
             }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-class ValidateTokenView(APIView):
-    authentication_classes = [SessionAuthentication, TokenAuthentication]
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        return Response(
-            {'message': f'Test for {request.user.username} passed!'},
-            status=status.HTTP_200_OK
-        )
 
 class ProfileDetailView(APIView):
     permission_classes = [IsAuthenticated]
