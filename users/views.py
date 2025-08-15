@@ -1,9 +1,9 @@
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.authentication import SessionAuthentication, TokenAuthentication
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenObtainPairView
 from django.shortcuts import get_object_or_404
 
 from .serializers import UserSerializer, ProfileSerializer
@@ -51,11 +51,14 @@ class CreateUserView(APIView):
             user = serializer.save()
             user.set_password(request.data['password'])
             user.save()
-            token = Token.objects.create(user=user)
+
+            refresh = RefreshToken.for_user(user)
             return Response({
-                'token': token.key,
+               'refresh': str(refresh),
+                'access': str(refresh.access_token),
                 'user': serializer.data
             }, status=status.HTTP_201_CREATED)
+        
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class ProfileDetailView(APIView):
@@ -66,10 +69,10 @@ class ProfileDetailView(APIView):
         serializer = ProfileSerializer(profile)
         return Response(serializer.data)
 
-    def put(self, request):
+    def patch(self, request):
         profile = request.user.profile
         serializer = ProfileSerializer(profile, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

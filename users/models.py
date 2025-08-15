@@ -11,7 +11,7 @@ class Profile(models.Model):
         on_delete=models.CASCADE,
         related_name='profile'
     )
-    name = models.CharField(blank=True)
+    name = models.CharField(blank=True, max_length=200)
     bio = models.TextField(max_length=10000, blank=True)
     birth_date = models.DateField(null=True, blank=True)
 
