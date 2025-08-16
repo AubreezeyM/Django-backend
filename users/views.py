@@ -1,78 +1,33 @@
 from rest_framework import status
-from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework.viewsets import ModelViewSet
+from rest_framework.decorators import action
 from django.shortcuts import get_object_or_404
 
 from .serializers import UserSerializer, ProfileSerializer
 from .models import CustomUser
 
-class LoginView(APIView):
+class UserViewSet(ModelViewSet):
+    queryset = CustomUser.objects.all()
+    serializer_class = UserSerializer
     permission_classes = [AllowAny]
+    http_method_names = ['post']
 
-    def post(self, request):
-        user = get_object_or_404(CustomUser, username=request.data['username'])
-        
-        if not user.check_password(request.data['password']):
-            return Response(
-                {'detail': 'Unauthorized.'},
-                status=status.HTTP_401_UNAUTHORIZED
-            )
-
-        refresh = RefreshToken.for_user(user)
-        serializer = UserSerializer(instance=user)
-
-        return Response({
-            'refresh': str(refresh),
-            'access':str(refresh.access_token),
-            'user': serializer.data
-        })
-
-class RefreshTokenView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request):
-        refresh_token = request.data.get('refresh')
-        try:
-            refresh = RefreshToken(refresh_token)
-            access_token = str(refresh.access_token)
-            return Response({'access': access_token})
-        except Exception as e:
-            return Response({'error': 'invalud refresh token'}, status=status.HTTP_401_UNAUTHORIZED)
-
-class CreateUserView(APIView):
-    permission_classes = [AllowAny]
-
-    def post(self, request):
+    def create(self, request):
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
             user.set_password(request.data['password'])
             user.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-            refresh = RefreshToken.for_user(user)
-            return Response({
-               'refresh': str(refresh),
-                'access': str(refresh.access_token),
-                'user': serializer.data
-            }, status=status.HTTP_201_CREATED)
-        
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class ProfileDetailView(APIView):
+class ProfileViewSet(ModelViewSet):
+    serializer_class = ProfileSerializer
     permission_classes = [IsAuthenticated]
+    http_method_names = ['get', 'patch']
 
-    def get(self, request):
-        profile = request.user.profile
-        serializer = ProfileSerializer(profile)
-        return Response(serializer.data)
-
-    def patch(self, request):
-        profile = request.user.profile
-        serializer = ProfileSerializer(profile, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def get_object(self):
+        return self.request.user.profile

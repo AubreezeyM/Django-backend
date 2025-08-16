@@ -1,9 +1,12 @@
 from django.urls import path
-from .views import LoginView, CreateUserView, ProfileDetailView
+from rest_framework.routers import DefaultRouter
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenVerifyView
 
-urlpatterns = [
-    path('login/', LoginView.as_view(), name='login'),
-    path('create/', CreateUserView.as_view(), name='create_user'),
-    path('profile/', ProfileDetailView.as_view(), name='profile_detail')
-]
+from . import views
+
+router = DefaultRouter()
+router.register(r'users', views.UserViewSet, basename='users')
+router.register(r'profile', views.ProfileViewSet, basename='profile')
+
+urlpatterns = router.urls
 
