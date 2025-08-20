@@ -5,13 +5,8 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework.decorators import action
 from django.shortcuts import get_object_or_404
 
-from rest_framework_simplejwt.views import TokenObtainPairView
-
-from .serializers import UserSerializer, ProfileSerializer, CustomObtainTokensSerializer
+from .serializers import UserSerializer, ProfileSerializer
 from .models import CustomUser
-
-class CustomObtainTokensView(TokenObtainPairView):
-    serializer_class = CustomObtainTokensSerializer
 
 class UserViewSet(ModelViewSet):
     queryset = CustomUser.objects.all()
