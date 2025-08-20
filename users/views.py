@@ -5,14 +5,19 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework.decorators import action
 from django.shortcuts import get_object_or_404
 
-from .serializers import UserSerializer, ProfileSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
+
+from .serializers import UserSerializer, ProfileSerializer, CustomObtainTokensSerializer
 from .models import CustomUser
+
+class CustomObtainTokensView(TokenObtainPairView):
+    serializer_class = CustomObtainTokensSerializer
 
 class UserViewSet(ModelViewSet):
     queryset = CustomUser.objects.all()
     serializer_class = UserSerializer
     permission_classes = [AllowAny]
-    http_method_names = ['post']
+    http_method_names = ['post', 'get']
 
     def create(self, request):
         serializer = UserSerializer(data=request.data)
